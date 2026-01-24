@@ -3,325 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¿Quién es el Impostor?</title>
+    <title>EduQuest: Master Edition</title>
     
-    <link rel="stylesheet" href="style.css"> <!--incorporamos css-->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
-    <h1>🕵️ ¿Quién es el Impostor?</h1>
+<div id="notification-area"></div>
 
-    <div id="screen-setup" class="card">
-        <h2>Configuración</h2>
-        <label>Número de Jugadores (3-15):</label>
-        <input type="number" id="num-players" min="3" max="15" value="4">
-        
-        <label>Número de Impostores:</label>
-        <input type="number" id="num-impostors" min="1" max="5" value="1">
+<div class="app-container">
+    <header class="panel">
+        <div><h1 class="game-title">Web de juegos</h1></div>
+        <div style="text-align:right">
+            <div class="coin-display">🪙 <span id="uiCoins">0</span></div>
+            <select id="gradeSelect" onchange="changeGrade()">
+                <option value="inicial">Nivel: Inicial</option>
+                <option value="intermedia">Nivel: Intermedia</option>
+                <option value="dificil">Nivel: Difícil</option>
+                <option value="experta">Nivel: Experta</option>
+                <option value="prodigio">Nivel: 🌟 Prodigio</option>
+            </select>
+        </div>  
+    </header>
 
-        <br><br>
-        <button onclick="goToNames()">Siguiente</button>
-    </div>
-
-    <div id="screen-names" class="card hidden">
-        <h2>Nombres de los Jugadores</h2>
-        <div id="names-inputs"></div>
-        <br>
-        <button onclick="startGameSetup()">Comenzar Juego</button>
-        <button class="secondary" onclick="resetApp()">Volver</button>
-    </div>
-
-    <div id="screen-category" class="card hidden">
-        <h2>Nueva Ronda</h2>
-        <p>Selecciona una categoría o elige al azar.</p>
-        <select id="category-select"></select>
-        <br><br>
-        <button class="success" onclick="startRound()">¡Jugar!</button>
-        <button class="secondary" onclick="showScores()">Ver Puntajes</button>
-    </div>
-
-    <div id="screen-reveal" class="card hidden">
-        <h2 id="reveal-title">Turno de...</h2>
-        <p>Pasa el dispositivo a <strong id="current-player-name" style="color: var(--primary); font-size: 1.2em;"></strong></p>
-        
-        <div id="card-content" class="hidden">
-            <p>Tu rol es:</p>
-            <div id="role-text" class="role-reveal"></div>
-            <p id="category-hint" style="font-size: 0.8em; color: #888;"></p>
-        </div>
-
-        <button id="btn-show" onclick="revealRole()">Ver mi Rol</button>
-        <button id="btn-next" class="hidden" onclick="nextPlayer()">Ocultar y Pasar</button>
-    </div>
-
-    <div id="screen-game" class="card hidden">
-        <h2>🤔 En Juego...</h2>
-        <p>¡Debatan y encuentren al impostor!</p>
-        <p>Categoría: <strong id="game-category-display"></strong></p>
-        
-        <div style="margin-top: 30px; padding: 20px; background: #222; border-radius: 10px;">
-            <h3>Herramientas</h3>
-            <button class="danger" onclick="revealImpostors()">Revelar Impostores</button>
+    <aside>
+        <div class="panel center-content">
+            <h3>Jugador</h3>
+            <input type="text" id="usernameInput" placeholder="Tu Nombre" maxlength="10" onchange="updateUsername(this.value)">
             
-            <div id="impostor-reveal-area" class="hidden">
-                <p>Los impostores eran:</p>
-                <h3 id="impostor-names" style="color: var(--danger);"></h3>
-                <p>La palabra era: <strong id="secret-word" style="color: var(--success);"></strong></p>
-                <hr style="border-color: #444;">
-                <p>Asignar Puntos:</p>
-                <div id="scoring-area"></div>
-                <br>
-                <button class="success" onclick="goToCategory()">Siguiente Ronda</button>
+            <div class="avatar-container">
+                <div class="mc-head mc-part" id="avHead"><div class="mc-eyes"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div></div>
+                <div class="mc-body-row"><div class="mc-arm mc-part" id="avArmL"></div><div class="mc-torso mc-part" id="avTorso"></div><div class="mc-arm mc-part" id="avArmR"></div></div>
+                <div class="mc-legs-row"><div class="mc-leg mc-part" id="avLegL"></div><div class="mc-leg mc-part" id="avLegR"></div></div>
+            </div>
+            
+            <div class="menu-buttons">
+                <button class="mc-btn blue" onclick="showDashboard()">🗺️ MUNDOS</button>
+                <button class="mc-btn green" onclick="showShop()">🛍️ TIENDA</button>
+            </div>
+            
+            <div class="admin-zone">
+                <div class="admin-tag" onclick="openAdminLogin()">Administrador</div>
+                <button class="mc-btn red small-btn" onclick="resetGame()">⚠️ BORRAR DATOS</button>
             </div>
         </div>
-    </div>
+    </aside>
 
-    <div id="screen-scores" class="card hidden">
-        <h2>Tabla de Puntos</h2>
-        <div id="scoreboard-list"></div>
-        <br>
-        <button onclick="goToCategory()">Volver al Juego</button>
-    </div>
+    <main class="panel">
+        <div id="view-dashboard">
+            <h3 style="margin-top:0;">Elige tu Aventura</h3>
+            <div class="subject-grid">
+                <button class="mc-btn blue big-btn" onclick="openSubject('matematica')">
+                    <div class="emoji">🧮</div>Matemática<br><br><small>Nivel <span id="lbl-matematica">1</span></small>
+                </button>
+                <button class="mc-btn green big-btn" onclick="openSubject('compu')">
+                    <div class="emoji">🤖</div>Computación<br><br><small>Nivel <span id="lbl-logic">1</span></small>
+                </button>
+                <button class="mc-btn red big-btn" onclick="openSubject('teclado')">
+                    <div class="emoji">⌨️</div>Teclado<br><br><small>Nivel <span id="lbl-typing">1</span></small>
+                </button>
+                <button class="mc-btn purple big-btn" onclick="openSubject('ingles')">
+                    <div class="emoji">🗣️</div>Ingles<br><br><small>Nivel <span id="lbl-ingles">1</span></small>
+                </button>
+                <button class="mc-btn pink big-btn" onclick="openSubject('Geografia')">
+                    <div class="emoji">🌍</div>Geografía<br><br><small>Nivel <span id="lbl-geografia">1</span></small>
+                </button>
+                <button class="mc-btn orange big-btn" onclick="openSubject('Algoritmos')">
+                    <div class="emoji">🧩</div>Lógica<br><br><small>Nivel <span id="lbl-algoritmos">1</span></small>
+                </button>
+                <button class="mc-btn blue-dark big-btn" onclick="openSubject('python')">
+                    <div class="emoji">🐍</div>Python<br><br><small>Nivel <span id="lbl-python">1</span></small>
+                </button>
+                <button class="mc-btn cyan big-btn" onclick="openSubject('claves')">
+                    <div class="emoji">🔐</div>Claves<br><br><small>Herramienta</small>
+                </button>
+            </div>
+        </div>
+        
+        <div id="view-map" style="display:none;">
+            <div class="map-header">
+                <h3 id="mapTitle" style="margin:0;">Juegos</h3>
+                <button class="mc-btn gray auto-width" onclick="showDashboard()">← Volver</button>
+            </div>
+            <div class="level-grid" id="mapGrid"></div>
+        </div>
+        
+        <div id="view-shop" style="display:none;">
+            <div class="map-header">
+                <h3 style="margin:0;">Tienda</h3>
+                <button class="mc-btn gray auto-width" onclick="showDashboard()">← Salir</button>
+            </div>
+            <div class="subject-grid" id="shopGrid"></div>
+        </div>
+    </main>
 
+    <aside>
+        <div class="panel padding-10">
+            <h3 class="gold-title">🏆 GLOBAL TOP 10</h3>
+            <div class="leaderboard-list" id="leaderboardList">
+                <div style="text-align:center; padding:20px;">Cargando...</div>
+            </div>
+        </div>
+    </aside>
 </div>
 
-<script>
-    // --- DATOS (10 Categorías x 40 Palabras) ---
-    const database = {
-        "Animales": ["León", "Elefante", "Tiburón", "Águila", "Pingüino", "Jirafa", "Koala", "Canguro", "Oso Polar", "Tigre", "Lobo", "Delfín", "Ballena", "Murciélago", "Camello", "Cocodrilo", "Serpiente", "Hormiga", "Abeja", "Mariposa", "Pulpo", "Medusa", "Caballo", "Vaca", "Cerdo", "Gato", "Perro", "Ratón", "Conejo", "Tortuga", "Loro", "Búho", "Flamenco", "Gorila", "Mono", "Panda", "Zorro", "Hipopótamo", "Rinoceronte", "Cebra"],
-        "Países": ["Argentina", "Brasil", "España", "Francia", "Italia", "Alemania", "Japón", "China", "Estados Unidos", "México", "Canadá", "Australia", "Rusia", "India", "Egipto", "Sudáfrica", "Inglaterra", "Portugal", "Colombia", "Perú", "Chile", "Uruguay", "Grecia", "Turquía", "Corea del Sur", "Tailandia", "Vietnam", "Marruecos", "Kenia", "Nueva Zelanda", "Suecia", "Noruega", "Finlandia", "Polonia", "Ucrania", "Cuba", "Jamaica", "Venezuela", "Paraguay", "Bolivia"],
-        "Profesiones": ["Médico", "Ingeniero", "Abogado", "Maestro", "Policía", "Bombero", "Cocinero", "Carpintero", "Electricista", "Mecánico", "Programador", "Diseñador", "Arquitecto", "Piloto", "Azafata", "Periodista", "Actor", "Músico", "Pintor", "Escritor", "Científico", "Astronauta", "Veterinario", "Dentista", "Psicólogo", "Juez", "Agricultor", "Pescador", "Panadero", "Carnicero", "Fontanero", "Soldado", "Futbolista", "Entrenador", "Jardinero", "Fotógrafo", "Modelo", "Bailarín", "Cantante", "Director"],
-        "Comida": ["Pizza", "Hamburguesa", "Sushi", "Tacos", "Paella", "Asado", "Empanadas", "Helado", "Chocolate", "Ensalada", "Sopa", "Espaguetis", "Lasaña", "Pollo Frito", "Papas Fritas", "Huevo Frito", "Tortilla", "Panqueques", "Waffles", "Donas", "Pastel", "Galletas", "Fruta", "Verdura", "Arroz", "Fideos", "Pescado", "Mariscos", "Queso", "Jamón", "Salchicha", "Tocino", "Yogur", "Cereal", "Tostadas", "Sandwich", "Burrito", "Curry", "Ramen", "Ceviche"],
-        "Deportes": ["Fútbol", "Baloncesto", "Tenis", "Golf", "Natación", "Atletismo", "Boxeo", "Voleibol", "Béisbol", "Rugby", "Hockey", "Ciclismo", "Esquí", "Snowboard", "Surf", "Skate", "Karate", "Judo", "Taekwondo", "Lucha Libre", "Automovilismo", "Motociclismo", "Gimnasia", "Patinaje", "Remo", "Escalada", "Pesca", "Caza", "Tiro con Arco", "Bolos", "Billar", "Dardos", "Ajedrez", "Ping Pong", "Bádminton", "Balonmano", "Waterpolo", "Equitación", "Póker", "Crossfit"],
-        "Objetos de Casa": ["Mesa", "Silla", "Sofá", "Cama", "Armario", "Lámpara", "Espejo", "Alfombra", "Cortina", "Televisor", "Computadora", "Teléfono", "Reloj", "Estufa", "Nevera", "Lavadora", "Secadora", "Microondas", "Licuadora", "Tostadora", "Cafetera", "Plato", "Vaso", "Tenedor", "Cuchillo", "Cuchara", "Sartén", "Olla", "Escoba", "Trapeador", "Aspiradora", "Plancha", "Toalla", "Jabón", "Champú", "Cepillo", "Peine", "Llave", "Puerta", "Ventana"],
-        "Películas/Géneros": ["Terror", "Comedia", "Acción", "Romance", "Ciencia Ficción", "Fantasía", "Drama", "Musical", "Documental", "Animación", "Western", "Thriller", "Misterio", "Aventura", "Guerra", "Biografía", "Crimen", "Familia", "Historia", "Deporte", "Superhéroes", "Zombies", "Vampiros", "Espacio", "Viajes en el tiempo", "Robots", "Monstruos", "Magia", "Espías", "Policial", "Catástrofes", "Navidad", "Halloween", "Cortometraje", "Cine Mudo", "Blanco y Negro", "Musical de Disney", "Anime", "Slasher", "Cyberpunk"],
-        "Partes del Cuerpo": ["Cabeza", "Ojo", "Oreja", "Nariz", "Boca", "Diente", "Lengua", "Cuello", "Hombro", "Brazo", "Codo", "Mano", "Dedo", "Uña", "Pecho", "Espalda", "Estómago", "Ombligo", "Cadera", "Pierna", "Rodilla", "Tobillo", "Pie", "Talón", "Cerebro", "Corazón", "Pulmón", "Estómago", "Hígado", "Riñón", "Hueso", "Músculo", "Sangre", "Piel", "Pelo", "Barba", "Bigote", "Ceja", "Pestaña", "Garganta"],
-        "Transporte": ["Coche", "Camión", "Autobús", "Moto", "Bicicleta", "Tren", "Metro", "Avión", "Helicóptero", "Barco", "Submarino", "Cohete", "Globo Aerostático", "Monopatín", "Patines", "Taxi", "Ambulancia", "Patrulla", "Camión de Bomberos", "Tractor", "Grúa", "Excavadora", "Yate", "Velero", "Canoa", "Kayak", "Crucero", "Teleférico", "Ascensor", "Escalera Mecánica", "Caballo", "Carreta", "Trineo", "Segway", "Dron", "Paracaídas", "Ala Delta", "Jet Ski", "Tranvía", "Funicular"],
-        "Marcas Famosas": ["Coca-Cola", "Pepsi", "McDonald's", "Burger King", "Nike", "Adidas", "Puma", "Apple", "Samsung", "Microsoft", "Google", "Amazon", "Facebook", "Twitter", "Instagram", "Toyota", "Ford", "Chevrolet", "Ferrari", "BMW", "Mercedes", "Audi", "Honda", "Sony", "Nintendo", "PlayStation", "Xbox", "Netflix", "Disney", "Marvel", "Lego", "Ikea", "Starbucks", "Zara", "H&M", "Louis Vuitton", "Gucci", "Rolex", "Visa", "Mastercard"]
-    };
+<div class="overlay" id="gameModal" style="display:none;">
+    <div class="modal-box">
+        <h3 id="gameTitle" style="color:#0277bd;">Nivel 1</h3>
+        <div id="gameContent" style="margin:30px 0;"></div>
+        <button class="mc-btn red" onclick="closeGame()">Salir</button>
+    </div>
+</div>
 
-    // --- ESTADO DEL JUEGO ---
-    let players = []; // { name: "...", score: 0 }
-    let usedWords = {}; // { "Animales": [0, 5, 2], ... }
-    let currentRound = {
-        category: "",
-        word: "",
-        impostorIndices: [],
-        playerIndex: 0,
-        shuffledPlayers: [] // Para el orden de pasar el teléfono
-    };
+<div class="overlay" id="adminLoginModal" style="display:none;">
+    <div class="modal-box small-modal">
+        <h3>Zona Admin</h3>
+        <input type="text" id="adminUser" placeholder="Usuario">
+        <input type="password" id="adminPass" placeholder="Contraseña">
+        <div class="row-flex">
+            <button class="mc-btn green" onclick="checkAdmin()">Entrar</button>
+            <button class="mc-btn gray" onclick="document.getElementById('adminLoginModal').style.display='none'">Cerrar</button>
+        </div>
+    </div>
+</div>
 
-    // --- FUNCIONES DE INICIO ---
-    function init() {
-        const select = document.getElementById('category-select');
-        select.innerHTML = '<option value="random">🎲 Aleatorio</option>';
-        for (const cat in database) {
-            select.innerHTML += `<option value="${cat}">${cat}</option>`;
-            usedWords[cat] = []; // Inicializar historial
-        }
-    }
-
-    function resetApp() {
-        location.reload();
-    }
-
-    function switchScreen(id) {
-        document.querySelectorAll('.card').forEach(el => el.classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
-    }
-
-    function goToNames() {
-        const num = parseInt(document.getElementById('num-players').value);
-        const imps = parseInt(document.getElementById('num-impostors').value);
-
-        if (imps >= num) {
-            alert("¡No puede haber tantos impostores como jugadores!");
-            return;
-        }
-
-        const container = document.getElementById('names-inputs');
-        container.innerHTML = "";
+<div class="overlay" id="adminPanelModal" style="display:none;">
+    <div class="modal-box wide-modal">
+        <h3>🛠️ Panel Creador</h3>
         
-        for (let i = 0; i < num; i++) {
-            container.innerHTML += `<input type="text" id="pname-${i}" placeholder="Nombre Jugador ${i+1}" value="Jugador ${i+1}">`;
-        }
+        <div class="admin-section yellow-bg">
+            <h4>🏆 Agregar al Ranking</h4>
+            <input type="text" id="manualName" placeholder="Nombre Jugador">
+            <input type="number" id="manualCoins" placeholder="Monedas">
+            <button class="mc-btn orange" onclick="adminAddManualPlayer()">Inyectar</button>
+        </div>
 
-        switchScreen('screen-names');
-    }
-
-    function startGameSetup() {
-        const num = parseInt(document.getElementById('num-players').value);
-        players = [];
-        for (let i = 0; i < num; i++) {
-            const name = document.getElementById(`pname-${i}`).value;
-            players.push({ name: name, score: 0 });
-        }
-        goToCategory();
-    }
-
-    function goToCategory() {
-        switchScreen('screen-category');
-    }
-
-    // --- LÓGICA DE LA RONDA ---
-    function startRound() {
-        // 1. Elegir Categoría
-        let catSelect = document.getElementById('category-select').value;
-        let category = catSelect;
+        <div class="admin-section gray-bg">
+            <h4>Nuevo Item</h4>
+            <input type="text" id="admItemName" placeholder="Nombre">
+            <input type="number" id="admPrice" placeholder="Precio">
+            <select id="admType">
+                <option value="head">Cabeza</option>
+                <option value="torso">Torso</option>
+                <option value="legs">Piernas</option>
+                <option value="arm">Brazos</option>
+            </select>
+            <input type="text" id="admTexture" placeholder="URL Imagen o Color Hex">
+            <button class="mc-btn green" onclick="adminAddItem()">Crear</button>
+        </div>
         
-        if (catSelect === 'random') {
-            const keys = Object.keys(database);
-            category = keys[Math.floor(Math.random() * keys.length)];
-        }
+        <div class="admin-section gray-bg">
+            <h4>Nuevo Nivel (Trivia)</h4>
+            <select id="admSubj">
+                <option value="matematica">Matemática</option>
+                <option value="compu">Computación</option>
+                <option value="ingles">Ingles</option>
+                <option value="teclado">Teclado</option>
+            </select>
+            <select id="admGrade">
+                <option value="inicial">Inicial</option>
+                <option value="intermedia">Intermedia</option>
+                <option value="dificil">Difícil</option>
+                <option value="experta">Experta</option>
+                <option value="prodigio">Prodigio</option>
+            </select> 
+            <input type="number" id="admLvlNum" placeholder="Nivel">
+            <input type="text" id="admQ" placeholder="Pregunta">
+            <input type="text" id="admAns" placeholder="Respuesta Correcta">
+            <input type="text" id="admOpts" placeholder="Opciones (sep. coma)">
+            <button class="mc-btn blue" onclick="adminAddLevel()">Guardar Nivel</button>
+        </div>
 
-        // 2. Elegir Palabra (Sin repetir)
-        const wordList = database[category];
-        let wordIndex;
-        let attempts = 0;
-        let available = false;
+        <button class="mc-btn gray full-width" onclick="closeAdmin()">Cerrar Panel</button>
+    </div>
+</div>
 
-        // Verificar si la categoría está llena
-        if (usedWords[category].length >= wordList.length) {
-            alert(`¡Se acabaron las palabras de ${category}! Reiniciando historial de esta categoría.`);
-            usedWords[category] = [];
-        }
+<script src="script.js"></script>
 
-        do {
-            wordIndex = Math.floor(Math.random() * wordList.length);
-            if (!usedWords[category].includes(wordIndex)) {
-                available = true;
-            }
-            attempts++;
-        } while (!available && attempts < 100);
+<h5 class="footer-credit">Juego Educativo &copy; 2025</h5>
 
-        usedWords[category].push(wordIndex);
-        const secretWord = wordList[wordIndex];
-
-        // 3. Asignar Impostores
-        const numImpostors = parseInt(document.getElementById('num-impostors').value);
-        let impostorIndices = [];
-        while (impostorIndices.length < numImpostors) {
-            let r = Math.floor(Math.random() * players.length);
-            if (!impostorIndices.includes(r)) impostorIndices.push(r);
-        }
-
-        // 4. Preparar estado
-        currentRound = {
-            category: category,
-            word: secretWord,
-            impostorIndices: impostorIndices,
-            playerIndex: 0,
-            shuffledPlayers: [...Array(players.length).keys()] // 0, 1, 2...
-        };
-
-        // UI Reset
-        document.getElementById('game-category-display').innerText = category;
-        document.getElementById('impostor-reveal-area').classList.add('hidden');
-        
-        showNextPlayerCard();
-    }
-
-    function showNextPlayerCard() {
-        if (currentRound.playerIndex >= players.length) {
-            switchScreen('screen-game');
-            return;
-        }
-
-        const pIdx = currentRound.playerIndex;
-        const pName = players[pIdx].name;
-
-        document.getElementById('current-player-name').innerText = pName;
-        document.getElementById('card-content').classList.add('hidden');
-        document.getElementById('btn-show').classList.remove('hidden');
-        document.getElementById('btn-next').classList.add('hidden');
-        
-        switchScreen('screen-reveal');
-    }
-
-    function revealRole() {
-        const pIdx = currentRound.playerIndex;
-        const isImpostor = currentRound.impostorIndices.includes(pIdx);
-        
-        const roleDiv = document.getElementById('role-text');
-        const hintDiv = document.getElementById('category-hint');
-
-        if (isImpostor) {
-            roleDiv.innerHTML = "🤫 ERES EL IMPOSTOR";
-            roleDiv.style.color = "var(--danger)";
-            hintDiv.innerText = "Intenta descubrir la palabra o pasar desapercibido.";
-        } else {
-            roleDiv.innerHTML = `<span class="word-reveal">${currentRound.word}</span>`;
-            roleDiv.style.color = "var(--success)";
-            hintDiv.innerText = `Categoría: ${currentRound.category}`;
-        }
-
-        document.getElementById('card-content').classList.remove('hidden');
-        document.getElementById('btn-show').classList.add('hidden');
-        document.getElementById('btn-next').classList.remove('hidden');
-    }
-
-    function nextPlayer() {
-        currentRound.playerIndex++;
-        showNextPlayerCard();
-    }
-
-    // --- RESULTADOS Y PUNTAJE ---
-    function revealImpostors() {
-        if (!confirm("¿Seguro que quieren terminar la ronda?")) return;
-
-        const impNames = currentRound.impostorIndices.map(i => players[i].name).join(", ");
-        document.getElementById('impostor-names').innerText = impNames;
-        document.getElementById('secret-word').innerText = currentRound.word;
-        
-        renderScoring();
-        document.getElementById('impostor-reveal-area').classList.remove('hidden');
-    }
-
-    function renderScoring() {
-        const container = document.getElementById('scoring-area');
-        container.innerHTML = "";
-
-        players.forEach((p, index) => {
-            const isImp = currentRound.impostorIndices.includes(index);
-            const roleTag = isImp ? `<span class="tag" style="background:var(--danger)">IMPOSTOR</span>` : `<span class="tag" style="background:var(--success); color:#000">CIVIL</span>`;
-            
-            container.innerHTML += `
-                <div class="player-score">
-                    <div>${p.name} ${roleTag} <br> <small>Pts: <span id="pts-${index}">${p.score}</span></small></div>
-                    <button class="score-btn success" onclick="addPoint(${index})">+</button>
-                </div>
-            `;
-        });
-    }
-
-    function addPoint(playerIndex) {
-        players[playerIndex].score++;
-        document.getElementById(`pts-${playerIndex}`).innerText = players[playerIndex].score;
-    }
-
-    function showScores() {
-        const list = document.getElementById('scoreboard-list');
-        // Ordenar por puntaje
-        const sorted = [...players].sort((a,b) => b.score - a.score);
-        
-        list.innerHTML = "";
-        sorted.forEach((p, i) => {
-            list.innerHTML += `
-                <div class="player-score" style="justify-content: flex-start;">
-                    <strong style="width: 30px;">#${i+1}</strong>
-                    <span style="flex-grow: 1; text-align: left; margin-left: 10px;">${p.name}</span>
-                    <strong>${p.score} pts</strong>
-                </div>
-            `;
-        });
-        switchScreen('screen-scores');
-    }
-
-    // Inicializar
-    init();
-
-</script>
 </body>
 </html>
