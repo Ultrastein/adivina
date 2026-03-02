@@ -1,5 +1,5 @@
 /**
- * LÓGICA DE LA APLICACIÓN SPA "QUIÉN ES EL IMPOSTOR" + TABLERO INTERACTIVO
+ * LÓGICA DE LA APLICACIÓN SPA "QUIÉN ES EL IMPOSTOR" (Toda la Dinámica Spyfall Restaurada)
  */
 
 const palabrasOriginales = {
@@ -15,13 +15,7 @@ const palabrasOriginales = {
     "Marcas Famosas": ["Coca-Cola", "Pepsi", "McDonald's", "Burger King", "Nike", "Adidas", "Puma", "Apple", "Samsung", "Microsoft", "Google", "Amazon", "Facebook", "Twitter", "Instagram", "Toyota", "Ford", "Chevrolet", "Ferrari", "BMW", "Mercedes", "Audi", "Honda", "Sony", "Nintendo", "PlayStation", "Xbox", "Netflix", "Disney", "Marvel", "Lego", "Ikea", "Starbucks", "Zara", "H&M", "Louis Vuitton", "Gucci", "Rolex", "Visa", "Mastercard"]
 };
 
-const avatarStyles = {
-    "Animales": "bottts", "Países": "adventurer", "Profesiones": "avataaars", "Comida": "fun-emoji",
-    "Deportes": "micah", "Objetos de Casa": "shapes", "Películas": "lorelei", "Partes del Cuerpo": "croodles",
-    "Transporte": "bottts-neutral", "Marcas Famosas": "big-smile"
-};
-const bgColorOptions = ["ffd5dc", "b6e3f4", "c0aede", "d1d4f9", "ffdfbf", "eaf1e8", "fcf4dd", "ffecb3", "c7ceea", "ffb7b2"];
-
+// Data base
 const DB = { "Mi Clase": [] }; // Cartas customizadas
 const CAT_ICONS = {
     "Mi Clase": "🎒", "Animales": "🦊", "Países": "🌎", "Profesiones": "👩‍⚕️", "Comida": "🍔",
@@ -29,20 +23,16 @@ const CAT_ICONS = {
     "Transporte": "🚗", "Marcas Famosas": "🏷️"
 };
 
-// Autogenerar avatares para las categorías default
+// Poblar la DB local
 for (const cat in palabrasOriginales) {
-    DB[cat] = [];
-    palabrasOriginales[cat].forEach(palabra => {
-        const style = avatarStyles[cat] || "fun-emoji";
-        const bgColor = bgColorOptions[palabra.length % bgColorOptions.length];
-        DB[cat].push({ name: palabra, img: `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(palabra)}&backgroundColor=${bgColor}` });
-    });
+    DB[cat] = palabrasOriginales[cat];
 }
 
 // ESTADO DEL JUEGO (SPYFALL/AMONG US)
 let players = []; // { name: "...", score: 0 }
+let selectedCategories = []; // Array de nombres de cats seleccionadas
+let poolWords = []; // Todas las palabras de las categorías seleccionadas
 let currentRound = {
-    category: "",
     word: "",
     impostorIndices: [],
     playerIndex: 0
@@ -91,14 +81,15 @@ const app = {
         container.innerHTML = "";
 
         for (let i = 0; i < num; i++) {
-            container.innerHTML += `<div class="form-group"><input type="text" id="pname-${i}" placeholder="Nombre Tripulante ${i + 1}" value="Jugador ${i + 1}"></div>`;
+            container.innerHTML += `<div class="form-group"><input type="text" id="pname-${i}" placeholder="Nombre Jugador ${i + 1}" value="Jugador ${i + 1}"></div>`;
         }
         this.showScreen('screen-names');
     },
 
-    startGameSetup() {
+    goToCategory() {
         const num = parseInt(document.getElementById('num-players').value);
-        // Si players ya tiene datos de la ronda anterior, respetamos los puntajes, sino iniciamos
+
+        // Registrar o actualizar los nombres manteniendo puntuación
         if (players.length !== num) {
             players = [];
             for (let i = 0; i < num; i++) {
@@ -106,15 +97,11 @@ const app = {
                 players.push({ name: name, score: 0 });
             }
         } else {
-            // Actualizar nombres por si los cambiaron pero mantener puntaje
             for (let i = 0; i < num; i++) {
                 players[i].name = document.getElementById(`pname-${i}`).value;
             }
         }
-        this.goToCategory();
-    },
 
-    goToCategory() {
         this.renderCategoriesList();
         this.showScreen('screen-categories');
     },
@@ -122,14 +109,27 @@ const app = {
     renderCategoriesList() {
         const container = document.getElementById('categories-container');
         container.innerHTML = "";
+        selectedCategories = []; // Reseteamos selecciones previas
 
         for (const cat in DB) {
             const count = DB[cat].length;
+            if (count === 0) continue; // Si 'Mi Clase' está vacío, no se muestra
+
             const icon = CAT_ICONS[cat] || "🌟";
 
             const card = document.createElement('div');
-            card.className = "category-card bouncy";
-            card.onclick = () => this.startRound(cat); // Inicia el pase de la bomba/dispositivo
+            card.className = "category-card";
+            card.id = `cat-card-${cat}`;
+
+            // Toggle selection
+            card.onclick = () => {
+                card.classList.toggle('selected');
+                if (card.classList.contains('selected')) {
+                    selectedCategories.push(cat);
+                } else {
+                    selectedCategories = selectedCategories.filter(c => c !== cat);
+                }
+            };
 
             card.innerHTML = `
                 <div class="category-icon">${icon}</div>
@@ -146,15 +146,21 @@ const app = {
         for (const cat in DB) { select.innerHTML += `<option value="${cat}">${cat}</option>`; }
     },
 
-    // --- LÓGICA DE ROUND SPYFALL ---
-    startRound(category) {
-        if (DB[category].length === 0) {
-            alert(`No hay palabras en la categoría "${category}". Añade cartas primero.`);
+    // --- LÓGICA PASO A PASO DEL ROUND (SPYFALL) ---
+    startRound() {
+        if (selectedCategories.length === 0) {
+            alert("¡Eh! Debes seleccionar al menos una categoría para poder jugar.");
             return;
         }
 
+        // Construir el pool de palabras con las categorías seleccionadas
+        poolWords = [];
+        selectedCategories.forEach(cat => {
+            DB[cat].forEach(word => poolWords.push({ name: typeof word === 'string' ? word : word.name, category: cat }));
+        });
+
         // Elegir palabra aleatoria
-        const wordObj = DB[category][Math.floor(Math.random() * DB[category].length)];
+        const randomWordObj = poolWords[Math.floor(Math.random() * poolWords.length)];
 
         // Elegir impostores
         const numImpostors = parseInt(document.getElementById('num-impostors').value);
@@ -165,8 +171,7 @@ const app = {
         }
 
         currentRound = {
-            category: category,
-            word: wordObj.name,
+            word: randomWordObj.name,
             impostorIndices: impostors,
             playerIndex: 0
         };
@@ -176,9 +181,9 @@ const app = {
 
     showNextPlayerCard() {
         if (currentRound.playerIndex >= players.length) {
-            // Se lo pasaron todos, ¡ahora al tablero de juego para debatir!
-            this.prepareBoard(currentRound.category);
-            this.showScreen('screen-game');
+            // Se lo pasaron todos, ¡pasamos a la Discusión!
+            this.prepareDiscussion();
+            this.showScreen('screen-discussion');
             return;
         }
 
@@ -202,12 +207,12 @@ const app = {
             roleDiv.innerHTML = "🚨 ERES EL IMPOSTOR 🚨";
             roleDiv.style.color = "var(--clr-accent)";
             roleDiv.style.borderColor = "var(--clr-accent)";
-            hintDiv.innerText = `Intenta adivinar la palabra o pasa desapercibido en la categoría: ${currentRound.category}.`;
+            hintDiv.innerText = `Intenta adivinar la palabra o pasa desapercibido prestando atención a lo que dicen los demás.`;
         } else {
             roleDiv.innerHTML = `✔️ ${currentRound.word}`;
             roleDiv.style.color = "var(--clr-primary-dark)";
             roleDiv.style.borderColor = "var(--clr-primary)";
-            hintDiv.innerText = `Temática general: ${currentRound.category}. ¡Mantenlo en secreto!`;
+            hintDiv.innerText = `Categorías en juego: ${selectedCategories.join(', ')}. ¡Mantenlo en secreto!`;
         }
 
         document.getElementById('card-content').classList.remove('hidden');
@@ -220,48 +225,20 @@ const app = {
         this.showNextPlayerCard();
     },
 
-    // --- TABLERO DE JUEGO (Discusión Visual) ---
-    prepareBoard(category) {
-        document.getElementById('game-title').innerText = `Tablero: ${category} ${CAT_ICONS[category] || ''}`;
-        this.renderBoard(DB[category]);
-    },
+    // --- DISCUSIÓN ---
+    prepareDiscussion() {
+        const modalContent = document.getElementById('word-list-content');
+        modalContent.innerHTML = "";
 
-    renderBoard(heroesArray) {
-        const board = document.getElementById('game-board');
-        board.innerHTML = "";
-
-        // En lugar de iterar ordenado, las mostramos ordenadas (en el "Quién es quién" es útil encontrarlas rápido o mezcladas).
-        // El Guess Who original es ordenado para buscar rápido.
-        heroesArray.forEach((hero) => {
-            const card = document.createElement('div');
-            card.className = "flip-card";
-            card.onclick = () => card.classList.toggle('is-flipped'); // Discard animation
-
-            card.innerHTML = `
-                <div class="flip-card-inner">
-                    <div class="flip-card-front">
-                        <div class="card-image-wrapper"><img src="${hero.img}" class="card-image" loading="lazy"></div>
-                        <div class="card-name"><span>${hero.name}</span></div>
-                    </div>
-                    <div class="flip-card-back"><div class="cross-mark">🙈</div></div>
-                </div>
-            `;
-            board.appendChild(card);
+        // Agrupar visualmente la lista de palabras por categoría por si quieren mirarla
+        poolWords.forEach(w => {
+            modalContent.innerHTML += `<span class="word-tag">${w.name} <small style="color:#888;">(${w.category})</small></span>`;
         });
-    },
-
-    restartBoard() {
-        const board = document.getElementById('game-board');
-        board.style.opacity = 0;
-        setTimeout(() => {
-            this.renderBoard(DB[currentRound.category]); // Esto resetea el toggle de 'is-flipped'
-            board.style.opacity = 1;
-        }, 300);
     },
 
     // --- REVELACIÓN DE RESULTADOS Y PUNTAJES ---
     revealImpostors() {
-        if (!confirm("¿Seguro que ya identificaron al impostor o terminó es tiempo de debate?")) return;
+        if (!confirm("¿Seguro que quieren terminar el tiempo de debate?")) return;
 
         const impNames = currentRound.impostorIndices.map(i => players[i].name).join(" y ");
         document.getElementById('impostor-names').innerText = impNames;
@@ -283,10 +260,9 @@ const app = {
                 <div class="player-score">
                     <div>
                         <strong>${p.name}</strong> ${roleTag} <br>
-                        <small style="color:#666; font-size:0.9rem;">Pts: <span id="pts-${index}" style="font-weight:900;">${p.score}</span></small>
+                        <small style="color:#666; font-size:0.9rem;">Pts Actuales: <span id="pts-${index}" style="font-weight:900;">${p.score}</span></small>
                     </div>
-                    <button class="score-btn bouncy" style="background-color: var(--clr-grass); border: 2px solid var(--clr-primary-dark); color: var(--clr-primary-dark);" onclick="app.addPoint(${index})">➕</button>
-                    <!-- <button class="score-btn bouncy" style="background-color: #ffb7b2; border: 2px solid #ff006e; color: #ff006e;" onclick="app.removePoint(${index})">➖</button> -->
+                    <button class="score-btn bouncy" style="background-color: var(--clr-grass); border: 2px solid var(--clr-primary-dark); color: var(--clr-primary-dark);" onclick="app.addPoint(${index})">Punto +1</button>
                 </div>
             `;
         });
@@ -317,21 +293,6 @@ const app = {
     },
 
     // --- FORMULARIO CUSTOM ---
-    previewImage(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        if (file.size > 1 * 1024 * 1024) {
-            alert("¡Wow, qué foto tan pesada! Por favor elige una imagen que pese menos de 1 MB.");
-            event.target.value = ""; return;
-        }
-        const reader = new FileReader();
-        reader.onload = e => {
-            uploadedImageBase64 = e.target.result;
-            document.getElementById('image-preview-box').innerHTML = `<img src="${uploadedImageBase64}">`;
-        };
-        reader.readAsDataURL(file);
-    },
-
     addCharacter(event) {
         event.preventDefault();
         const category = document.getElementById('char-category').value;
@@ -339,22 +300,14 @@ const app = {
 
         if (!name) return;
 
-        let finalImage = uploadedImageBase64;
-        if (!finalImage) {
-            const style = avatarStyles[category] || "fun-emoji";
-            const bgColor = bgColorOptions[Math.floor(Math.random() * bgColorOptions.length)];
-            finalImage = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(name)}&backgroundColor=${bgColor}`;
-        }
-
         if (!DB[category]) DB[category] = [];
-        DB[category].unshift({ name: name, img: finalImage });
+
+        // Podemos guardar solo el string o el objeto
+        DB[category].unshift({ name: name });
 
         this.saveLocalData();
         document.getElementById('add-char-form').reset();
-        document.getElementById('image-preview-box').innerHTML = "<span>Sin foto</span>";
-        uploadedImageBase64 = "";
-
-        alert(`¡✨ La carta secreta "${name}" ha sido añadida a la categoría "${category}" con éxito!`);
+        alert(`¡✨ La nueva palabra secreta "${name}" ha sido añadida a la categoría "${category}" con éxito!`);
         this.showScreen('screen-menu');
     }
 };

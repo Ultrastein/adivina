@@ -24,7 +24,8 @@
                 <p class="subtitle">¡Adivina la palabra secreta o descubre al impostor!</p>
 
                 <div class="menu-actions">
-                    <button class="btn-primary bouncy" onclick="app.showScreen('screen-setup')">👾 Jugar Ahora</button>
+                    <button class="btn-primary bouncy" onclick="app.showScreen('screen-setup')">👾 Iniciar
+                        Juego</button>
                     <button class="btn-secondary bouncy" onclick="app.showScreen('screen-add-character')">📚 Crear
                         Cartas Custom</button>
                 </div>
@@ -43,12 +44,12 @@
                 <div class="form-card float-anim">
                     <div class="form-header-icon">⚙️</div>
                     <div class="form-group">
-                        <label>Número de Jugadores (Tripulantes + Impostores):</label>
+                        <label>Cantidad de Jugadores (Total):</label>
                         <input type="number" id="num-players" min="3" max="15" value="4">
                     </div>
 
                     <div class="form-group">
-                        <label>Número de Impostores:</label>
+                        <label>Cantidad de Impostores:</label>
                         <input type="number" id="num-impostors" min="1" max="5" value="1">
                     </div>
 
@@ -70,19 +71,32 @@
                 <div class="form-card" style="margin-top:20px;">
                     <div id="names-inputs" class="names-list"></div>
                     <button class="btn-secondary bouncy" style="width:100%; margin-top:20px;"
-                        onclick="app.startGameSetup()">¡Elegir Categoría! 🗺️</button>
+                        onclick="app.goToCategory()">Siguiente ➡️</button>
                 </div>
             </div>
         </section>
 
-        <!-- PANTALLA 4: CATEGORÍAS -->
+        <!-- PANTALLA 4: CATEGORÍAS (MÚLTIPLES) -->
         <section id="screen-categories" class="screen">
             <header class="top-bar">
-                <h2 class="title-glow">📍 Elige la Temática de la Ronda</h2>
+                <button class="btn-back bouncy" onclick="app.showScreen('screen-names')">⬅ Volver</button>
+                <h2 class="title-glow">📍 Elige las Categorías</h2>
+                <div style="width: 80px;"></div>
             </header>
 
-            <div class="categories-grid" id="categories-container">
+            <div
+                style="text-align: center; margin-top:20px; font-weight:800; color:var(--clr-primary-dark); font-size:1.1rem; padding: 0 20px;">
+                Selecciona con qué categorías quieres jugar y con cuáles no en esta ronda.
+            </div>
+
+            <div class="categories-grid" id="categories-container" style="padding-top: 20px; padding-bottom: 120px;">
                 <!-- Renderizado dinámicamente con JS -->
+            </div>
+
+            <div
+                style="position:fixed; bottom:0; left:0; width:100%; background:rgba(255,255,255,0.9); padding:20px; box-shadow:0 -5px 15px rgba(0,0,0,0.1); text-align:center;">
+                <button class="btn-primary bouncy" style="width:100%; max-width:400px; font-size:1.4rem;"
+                    onclick="app.startRound()">¡Comenzar Ronda! 🚀</button>
             </div>
         </section>
 
@@ -110,22 +124,41 @@
             </div>
         </section>
 
-        <!-- PANTALLA 6: TABLERO DE JUEGO & DISCUSIÓN -->
-        <section id="screen-game" class="screen">
-            <header class="top-bar" style="flex-wrap: wrap; gap: 10px;">
-                <button class="btn-info bouncy" onclick="app.restartBoard()">🔄 Re-mezclar</button>
-                <h2 id="game-title" class="title-glow">Tablero</h2>
-                <button class="btn-primary bouncy" style="background-color: #ff006e;" onclick="app.revealImpostors()">🚨
-                    Terminar Ronda</button>
-            </header>
+        <!-- PANTALLA 6: DISCUSIÓN -->
+        <section id="screen-discussion" class="screen">
+            <div class="form-container">
+                <div class="form-card float-anim" style="text-align: center;">
+                    <h1
+                        style="font-family: var(--font-heading); color: var(--clr-primary-dark); font-size: 2.5rem; margin-bottom: 20px;">
+                        🗣️ Fase de Discusión</h1>
 
-            <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.7); font-weight: 800;">
-                🗣️ Fase de discusión: Hagan preguntas. El impostor debe intentar adivinar la palabra secreta mirando
-                las cartas.
+                    <p style="font-size: 1.1rem; color: #555; margin-bottom: 30px; font-weight: 800;">
+                        Ya todos saben su rol. Hagan preguntas y discutan para encontrar al impostor (¡O para que el
+                        impostor descubra la palabra secreta!).
+                    </p>
+
+                    <button class="btn-secondary bouncy" style="width: 100%; margin-bottom: 15px;"
+                        onclick="document.getElementById('word-list-modal').style.display='block'">📖 Ver Lista de
+                        Palabras Posibles</button>
+
+                    <button class="btn-primary bouncy"
+                        style="width: 100%; background-color: #ff006e; font-size: 1.3rem;"
+                        onclick="app.revealImpostors()">🚨 Terminar Ronda y Votar</button>
+                </div>
             </div>
 
-            <div class="board" id="game-board">
-                <!-- Las cartas se inyectan dinámicamente -->
+            <!-- Pop-up de referencias para el impostor / jugadores -->
+            <div id="word-list-modal"
+                style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; padding:20px; overflow-y:auto;">
+                <div
+                    style="background:white; border-radius:20px; padding:20px; max-width:600px; margin: 40px auto; position:relative;">
+                    <button onclick="document.getElementById('word-list-modal').style.display='none'"
+                        style="position:absolute; top:10px; right:10px; background:var(--clr-accent); color:white; border:none; border-radius:50%; width:40px; height:40px; font-weight:bold; cursor:pointer;">X</button>
+                    <h2 style="font-family:var(--font-heading); color:var(--clr-primary-dark); margin-bottom:15px;">
+                        Lista de Palabras en Juego</h2>
+                    <div id="word-list-content" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -156,13 +189,17 @@
                     <h3 style="font-family: var(--font-heading); font-size: 1.5rem; text-align:center;">Asignar Puntos
                         de la Ronda:</h3>
                     <p style="text-align:center; font-size:0.9rem; color:#666; margin-bottom:20px;">¿Quién ganó la
-                        discusión? Sumen puntos a los ganadores (Ej. +1 si los tripulantes adivinaron al impostor, o +1
-                        al impostor si pasó desapercibido).</p>
+                        ronda? Súmenle 1 punto (Ej: al Impostor si adivinó la palabra o no fue descubierto, o a los
+                        Tripulantes si lo descubrieron).</p>
 
                     <div id="scoring-area"></div>
 
-                    <button class="btn-primary bouncy" style="width: 100%; margin-top: 30px; padding: 15px;"
-                        onclick="app.showLeaderboard()">📊 Ver Ranking Total</button>
+                    <div style="display:flex; gap:10px; margin-top:30px;">
+                        <button class="btn-primary bouncy" style="flex:1; padding: 15px;"
+                            onclick="app.showLeaderboard()">📊 Ranking</button>
+                        <button class="btn-secondary bouncy" style="flex:1; padding: 15px;"
+                            onclick="app.goToCategory()">Siguiente Ronda ⏭️</button>
+                    </div>
                 </div>
             </div>
         </section>
