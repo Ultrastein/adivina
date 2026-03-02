@@ -1,104 +1,112 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¿Quién es Quién? - Mágico</title>
-    <!-- Fuente al estilo Ghibli (Suave y redondeada) -->
+    <title>¿Quién es Quién? - Aventura Mágica</title>
+    <!-- Fuentes divertidas y estilo Ghibli (Fredoka para títulos, Nunito para texto) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<div class="app-container">
-    <!-- PANTALLA 1: MENÚ PRINCIPAL -->
-    <section id="screen-menu" class="screen active">
-        <div class="menu-box">
-            <h1>✨ ¿Quién es Quién? ✨</h1>
-            <p class="subtitle">Encuentra al personaje misterioso</p>
-            
-            <div class="menu-actions">
-                <button class="btn-primary" onclick="app.showScreen('screen-categories')">🎮 Jugar</button>
-                <button class="btn-secondary" onclick="app.showScreen('screen-add-character')">➕ Añadir Personaje</button>
+    <div class="app-container">
+        <!-- PANTALLA 1: MENÚ PRINCIPAL -->
+        <section id="screen-menu" class="screen active">
+            <div class="menu-box float-anim">
+                <div class="logo-emoji">✨🕵️‍♂️✨</div>
+                <h1>¿Quién es Quién?</h1>
+                <p class="subtitle">¡Adivina el personaje secreto de tu compañero!</p>
+
+                <div class="menu-actions">
+                    <button class="btn-primary bouncy" onclick="app.showScreen('screen-categories')">🎮 Jugar
+                        Ahora</button>
+                    <button class="btn-secondary bouncy" onclick="app.showScreen('screen-add-character')">➕ Añadir a mi
+                        Clase</button>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- PANTALLA 2: CATEGORÍAS -->
-    <section id="screen-categories" class="screen">
-        <header class="top-bar">
-            <button class="btn-back" onclick="app.showScreen('screen-menu')">⬅ Volver</button>
-            <h2>Elige una temática</h2>
-            <div style="width: 80px;"></div> <!-- espaciador -->
-        </header>
+        <!-- PANTALLA 2: CATEGORÍAS -->
+        <section id="screen-categories" class="screen">
+            <header class="top-bar">
+                <button class="btn-back bouncy" onclick="app.showScreen('screen-menu')">⬅ Volver</button>
+                <h2 class="title-glow">Elige tu temática favorita</h2>
+                <div style="width: 80px;"></div> <!-- espaciador -->
+            </header>
 
-        <div class="categories-grid" id="categories-container">
-            <!-- Renderizado dinámicamente con JS -->
-        </div>
-    </section>
+            <div class="categories-grid" id="categories-container">
+                <!-- Renderizado dinámicamente con JS -->
+            </div>
+        </section>
 
-    <!-- PANTALLA 3: TABLERO DE JUEGO -->
-    <section id="screen-game" class="screen">
-        <header class="top-bar">
-            <button class="btn-back" onclick="app.showScreen('screen-categories')">⬅ Salir</button>
-            <h2 id="game-title">Tablero</h2>
-            <button class="btn-info" onclick="app.restartBoard()">🔄 Reiniciar Tablero</button>
-        </header>
-        
-        <div class="board" id="game-board">
-            <!-- Las cartas se inyectan dinámicamente -->
-        </div>
-    </section>
+        <!-- PANTALLA 3: TABLERO DE JUEGO -->
+        <section id="screen-game" class="screen">
+            <header class="top-bar">
+                <button class="btn-back bouncy" onclick="app.showScreen('screen-categories')">⬅ Salir</button>
+                <h2 id="game-title" class="title-glow">Tablero</h2>
+                <button class="btn-info bouncy" onclick="app.restartBoard()">🔄 Reiniciar</button>
+            </header>
 
-    <!-- PANTALLA 4: AÑADIR PERSONAJE -->
-    <section id="screen-add-character" class="screen">
-        <header class="top-bar">
-            <button class="btn-back" onclick="app.showScreen('screen-menu')">⬅ Volver</button>
-            <h2>Nuevo Personaje / Alumno</h2>
-            <div style="width: 80px;"></div>
-        </header>
+            <div class="board" id="game-board">
+                <!-- Las cartas se inyectan dinámicamente -->
+            </div>
+        </section>
 
-        <div class="form-container">
-            <div class="form-card">
-                <form id="add-char-form" onsubmit="app.addCharacter(event)">
-                    <p style="margin-bottom: 20px; color: #666; font-size: 0.95rem;">
-                        Agrega a tus alumnos o personajes favoritos con una foto desde tu dispositivo. ¡Se guardará automáticamente!
-                    </p>
-                    
-                    <div class="form-group">
-                        <label for="char-category">Categoría:</label>
-                        <select id="char-category" required>
-                            <option value="Clase">Mi Clase (Alumnos)</option>
-                            <option value="Animales">Animales</option>
-                            <option value="Tecnología">Tecnología</option>
-                            <option value="Historia">Personajes Históricos</option>
-                        </select>
-                    </div>
+        <!-- PANTALLA 4: AÑADIR PERSONAJE -->
+        <section id="screen-add-character" class="screen">
+            <header class="top-bar">
+                <button class="btn-back bouncy" onclick="app.showScreen('screen-menu')">⬅ Volver</button>
+                <h2 class="title-glow">Añadir Personaje</h2>
+                <div style="width: 80px;"></div>
+            </header>
 
-                    <div class="form-group">
-                        <label for="char-name">Nombre:</label>
-                        <input type="text" id="char-name" placeholder="Ej. Totoro, Ana..." required>
-                    </div>
+            <div class="form-container">
+                <div class="form-card float-anim">
+                    <form id="add-char-form" onsubmit="app.addCharacter(event)">
+                        <div class="form-header-icon">📸</div>
+                        <p class="form-subtitle">
+                            ¡Sube una foto de un alumno o escribe cualquier nombre para auto-generar uno!
+                        </p>
 
-                    <div class="form-group">
-                        <label for="char-image">Sube una foto:</label>
-                        <div class="file-upload-wrapper">
-                            <input type="file" id="char-image" accept="image/png, image/jpeg, image/webp" required onchange="app.previewImage(event)">
-                            <div class="image-preview" id="image-preview-box">
-                                <span>No hay imagen</span>
+                        <div class="form-group">
+                            <label for="char-category">¿Dónde lo guardamos?</label>
+                            <select id="char-category" required>
+                                <!-- Opciones inyectadas dinámicamente -->
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="char-name">Nombre del Personaje:</label>
+                            <input type="text" id="char-name" placeholder="Ej. Profe Nico, Totoro..." required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="char-image">Sube su foto (Opcional):</label>
+                            <div class="file-upload-wrapper">
+                                <input type="file" id="char-image" accept="image/png, image/jpeg, image/webp"
+                                    onchange="app.previewImage(event)">
+                                <div class="image-preview" id="image-preview-box">
+                                    <span>No hay foto</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <button type="submit" class="btn-primary" style="width: 100%; margin-top: 15px;">💾 Guardar Personaje</button>
-                </form>
+                        <button type="submit" class="btn-primary bouncy"
+                            style="width: 100%; margin-top: 20px; font-size: 1.3rem;">💾 ¡Guardar Personaje!</button>
+                    </form>
+                </div>
             </div>
-        </div>
-    </section>
-</div>
+        </section>
+    </div>
 
-<script src="script.js"></script>
+    <!-- Pequeño bloque de script para inyectar correctamente la lógica -->
+    <script src="script.js"></script>
 </body>
+
 </html>
