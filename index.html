@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¿Quién es Quién? - Aventura Mágica</title>
-    <!-- Fuentes divertidas y estilo Ghibli (Fredoka para títulos, Nunito para texto) -->
+    <title>¿Quién es el Impostor?</title>
+    <!-- Fuentes divertidas y estilo Ghibli -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;800;900&display=swap"
@@ -20,24 +20,65 @@
         <section id="screen-menu" class="screen active">
             <div class="menu-box float-anim">
                 <div class="logo-emoji">✨🕵️‍♂️✨</div>
-                <h1>¿Quién es Quién?</h1>
-                <p class="subtitle">¡Adivina el personaje secreto de tu compañero!</p>
+                <h1>¿Quién es el Impostor?</h1>
+                <p class="subtitle">¡Adivina la palabra secreta o descubre al impostor!</p>
 
                 <div class="menu-actions">
-                    <button class="btn-primary bouncy" onclick="app.showScreen('screen-categories')">🎮 Jugar
-                        Ahora</button>
-                    <button class="btn-secondary bouncy" onclick="app.showScreen('screen-add-character')">➕ Añadir a mi
-                        Clase</button>
+                    <button class="btn-primary bouncy" onclick="app.showScreen('screen-setup')">👾 Jugar Ahora</button>
+                    <button class="btn-secondary bouncy" onclick="app.showScreen('screen-add-character')">📚 Crear
+                        Cartas Custom</button>
                 </div>
             </div>
         </section>
 
-        <!-- PANTALLA 2: CATEGORÍAS -->
-        <section id="screen-categories" class="screen">
+        <!-- PANTALLA 2: CONFIGURACIÓN INICIAL (Players/Impostors) -->
+        <section id="screen-setup" class="screen">
             <header class="top-bar">
                 <button class="btn-back bouncy" onclick="app.showScreen('screen-menu')">⬅ Volver</button>
-                <h2 class="title-glow">Elige tu temática favorita</h2>
-                <div style="width: 80px;"></div> <!-- espaciador -->
+                <h2 class="title-glow">Configuración</h2>
+                <div style="width: 80px;"></div>
+            </header>
+
+            <div class="form-container">
+                <div class="form-card float-anim">
+                    <div class="form-header-icon">⚙️</div>
+                    <div class="form-group">
+                        <label>Número de Jugadores (Tripulantes + Impostores):</label>
+                        <input type="number" id="num-players" min="3" max="15" value="4">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Número de Impostores:</label>
+                        <input type="number" id="num-impostors" min="1" max="5" value="1">
+                    </div>
+
+                    <button class="btn-primary bouncy" style="width:100%; margin-top:15px;"
+                        onclick="app.goToNames()">Siguiente ➡️</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 3: NOMBRES DE JUGADORES -->
+        <section id="screen-names" class="screen">
+            <header class="top-bar">
+                <button class="btn-back bouncy" onclick="app.showScreen('screen-setup')">⬅ Volver</button>
+                <h2 class="title-glow">Jugadores</h2>
+                <div style="width: 80px;"></div>
+            </header>
+
+            <div class="form-container">
+                <div class="form-card" style="margin-top:20px;">
+                    <div id="names-inputs" class="names-list"></div>
+                    <button class="btn-secondary bouncy" style="width:100%; margin-top:20px;"
+                        onclick="app.startGameSetup()">¡Elegir Categoría! 🗺️</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 4: CATEGORÍAS -->
+        <section id="screen-categories" class="screen">
+            <header class="top-bar">
+                <h2 class="title-glow">📍 Elige la Temática de la Ronda</h2>
             </header>
 
             <div class="categories-grid" id="categories-container">
@@ -45,20 +86,103 @@
             </div>
         </section>
 
-        <!-- PANTALLA 3: TABLERO DE JUEGO -->
+        <!-- PANTALLA 5: REVELACIÓN DE ROLES (PASS N PLAY) -->
+        <section id="screen-reveal" class="screen">
+            <div class="menu-box reveal-box float-anim" style="margin: auto;">
+                <h2 id="reveal-title" class="title-glow" style="font-size: 2rem; color: var(--clr-secondary-dark);">
+                    Turno de...</h2>
+                <p id="current-player-name" class="player-name-banner"></p>
+
+                <p style="margin-top:20px; font-weight: 800; color: #666;">Pásale el dispositivo a esta persona para que
+                    vea su rol en secreto. 🤫</p>
+
+                <div id="card-content" class="hidden" style="margin-top: 20px;">
+                    <p style="font-size: 1.2rem; font-weight: 800;">Tú eres:</p>
+                    <div id="role-text" class="role-reveal"></div>
+                    <p id="category-hint" style="font-size: 1rem; color: #888; font-weight:800; margin-top:10px;"></p>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button id="btn-show" class="btn-primary bouncy" onclick="app.revealRole()">👀 Ver mi Rol</button>
+                    <button id="btn-next" class="btn-secondary bouncy hidden" onclick="app.nextPlayer()">Ocultar y Pasar
+                        ➡️</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 6: TABLERO DE JUEGO & DISCUSIÓN -->
         <section id="screen-game" class="screen">
-            <header class="top-bar">
-                <button class="btn-back bouncy" onclick="app.showScreen('screen-categories')">⬅ Salir</button>
+            <header class="top-bar" style="flex-wrap: wrap; gap: 10px;">
+                <button class="btn-info bouncy" onclick="app.restartBoard()">🔄 Re-mezclar</button>
                 <h2 id="game-title" class="title-glow">Tablero</h2>
-                <button class="btn-info bouncy" onclick="app.restartBoard()">🔄 Reiniciar</button>
+                <button class="btn-primary bouncy" style="background-color: #ff006e;" onclick="app.revealImpostors()">🚨
+                    Terminar Ronda</button>
             </header>
+
+            <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.7); font-weight: 800;">
+                🗣️ Fase de discusión: Hagan preguntas. El impostor debe intentar adivinar la palabra secreta mirando
+                las cartas.
+            </div>
 
             <div class="board" id="game-board">
                 <!-- Las cartas se inyectan dinámicamente -->
             </div>
         </section>
 
-        <!-- PANTALLA 4: AÑADIR PERSONAJE -->
+        <!-- PANTALLA 7: RESOLUCIÓN Y PUNTAJES -->
+        <section id="screen-scores" class="screen">
+            <header class="top-bar">
+                <h2 class="title-glow">🏆 Resultados</h2>
+            </header>
+
+            <div class="form-container">
+                <div class="form-card" style="max-width: 600px;">
+                    <div style="text-align: center;">
+                        <h3
+                            style="font-family: var(--font-heading); font-size: 2rem; color: #ff006e; margin-bottom:10px;">
+                            Los Impostores eran...</h3>
+                        <div id="impostor-names" class="player-name-banner" style="background-color: #ff006e;"></div>
+
+                        <h3
+                            style="font-family: var(--font-heading); font-size: 1.5rem; color: var(--clr-primary-dark); margin-top:20px; margin-bottom:10px;">
+                            La palabra secreta era...</h3>
+                        <div id="secret-word" class="role-reveal"
+                            style="font-size:1.8rem; border-color: var(--clr-primary); color: var(--clr-primary-dark);">
+                        </div>
+                    </div>
+
+                    <hr style="border: 2px dashed #ddd; margin: 30px 0;">
+
+                    <h3 style="font-family: var(--font-heading); font-size: 1.5rem; text-align:center;">Asignar Puntos
+                        de la Ronda:</h3>
+                    <p style="text-align:center; font-size:0.9rem; color:#666; margin-bottom:20px;">¿Quién ganó la
+                        discusión? Sumen puntos a los ganadores (Ej. +1 si los tripulantes adivinaron al impostor, o +1
+                        al impostor si pasó desapercibido).</p>
+
+                    <div id="scoring-area"></div>
+
+                    <button class="btn-primary bouncy" style="width: 100%; margin-top: 30px; padding: 15px;"
+                        onclick="app.showLeaderboard()">📊 Ver Ranking Total</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 8: LEADERBOARD FINAL -->
+        <section id="screen-leaderboard" class="screen">
+            <header class="top-bar">
+                <button class="btn-back bouncy" onclick="app.showScreen('screen-setup')">🏠 Nuevo Juego</button>
+                <h2 class="title-glow">Ranking</h2>
+                <button class="btn-secondary bouncy" onclick="app.goToCategory()">Siguiente Ronda ⏭️</button>
+            </header>
+
+            <div class="form-container">
+                <div class="form-card">
+                    <div id="scoreboard-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 9: AÑADIR PERSONAJE (Custom DB) -->
         <section id="screen-add-character" class="screen">
             <header class="top-bar">
                 <button class="btn-back bouncy" onclick="app.showScreen('screen-menu')">⬅ Volver</button>
@@ -71,21 +195,16 @@
                     <form id="add-char-form" onsubmit="app.addCharacter(event)">
                         <div class="form-header-icon">📸</div>
                         <p class="form-subtitle">
-                            ¡Sube una foto de un alumno o escribe cualquier nombre para auto-generar uno!
+                            ¡Sube una foto de un alumno o crea una nueva palabra secreta para el juego!
                         </p>
-
                         <div class="form-group">
-                            <label for="char-category">¿Dónde lo guardamos?</label>
-                            <select id="char-category" required>
-                                <!-- Opciones inyectadas dinámicamente -->
-                            </select>
+                            <label for="char-category">¿En qué categoría?</label>
+                            <select id="char-category" required></select>
                         </div>
-
                         <div class="form-group">
-                            <label for="char-name">Nombre del Personaje:</label>
-                            <input type="text" id="char-name" placeholder="Ej. Profe Nico, Totoro..." required>
+                            <label for="char-name">Palabra/Nombre:</label>
+                            <input type="text" id="char-name" placeholder="Ej. Profe Nico" required>
                         </div>
-
                         <div class="form-group">
                             <label for="char-image">Sube su foto (Opcional):</label>
                             <div class="file-upload-wrapper">
@@ -96,16 +215,15 @@
                                 </div>
                             </div>
                         </div>
-
                         <button type="submit" class="btn-primary bouncy"
-                            style="width: 100%; margin-top: 20px; font-size: 1.3rem;">💾 ¡Guardar Personaje!</button>
+                            style="width: 100%; margin-top: 20px; font-size: 1.3rem;">💾 ¡Guardar!</button>
                     </form>
                 </div>
             </div>
         </section>
+
     </div>
 
-    <!-- Pequeño bloque de script para inyectar correctamente la lógica -->
     <script src="script.js"></script>
 </body>
 

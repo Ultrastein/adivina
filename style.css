@@ -3,21 +3,15 @@
     --clr-sky: #a2d2ff;
     --clr-grass: #b5e48c;
     --clr-primary: #52b788;
-    /* Verde hoja activo */
     --clr-primary-dark: #40916c;
     --clr-secondary: #ffb703;
-    /* Amarillo sol */
     --clr-secondary-dark: #fb8500;
     --clr-accent: #ff006e;
-    /* Rosa mágico */
     --clr-text: #1b4332;
-    /* Verde muy oscuro casi negro */
 
     --clr-card-back: #4ecdc4;
-    /* Color reverso de carta activa */
 
     --font-heading: 'Fredoka One', cursive;
-    /* Divertida y redondeada */
     --font-text: 'Nunito', sans-serif;
 
     --shadow-soft: 0 10px 25px rgba(27, 67, 50, 0.15);
@@ -36,7 +30,6 @@
 body {
     font-family: var(--font-text);
     background-color: var(--clr-sky);
-    /* Fondo divertido con patrón de puntos */
     background-image: radial-gradient(var(--clr-grass) 15%, transparent 16%), radial-gradient(var(--clr-grass) 15%, transparent 16%);
     background-size: 60px 60px;
     background-position: 0 0, 30px 30px;
@@ -73,6 +66,10 @@ body {
     opacity: 1;
     pointer-events: all;
     transform: scale(1) translateY(0);
+}
+
+.hidden {
+    display: none !important;
 }
 
 /* TOP BAR */
@@ -196,7 +193,7 @@ button:active {
 
 .menu-box h1 {
     font-family: var(--font-heading);
-    font-size: 3.2rem;
+    font-size: 2.8rem;
     color: var(--clr-secondary-dark);
     margin-bottom: 15px;
     line-height: 1.1;
@@ -214,6 +211,141 @@ button:active {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+/* FORMS GENERAL */
+.form-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 20px;
+    flex-grow: 1;
+}
+
+.form-card {
+    background: white;
+    padding: 40px;
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-float);
+    width: 100%;
+    max-width: 550px;
+    border: 5px solid var(--clr-primary);
+    position: relative;
+}
+
+.form-header-icon {
+    font-size: 4rem;
+    text-align: center;
+    margin-top: -70px;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+.form-subtitle {
+    text-align: center;
+    font-weight: 800;
+    color: var(--clr-primary-dark);
+    margin-bottom: 25px;
+    font-size: 1.1rem;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    color: var(--clr-secondary-dark);
+    margin-bottom: 10px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 15px;
+    border: 3px solid #e9ecef;
+    border-radius: var(--border-radius-med);
+    font-family: inherit;
+    font-size: 1.1rem;
+    font-weight: 700;
+    transition: all 0.2s;
+    outline: none;
+    background-color: #f8f9fa;
+    color: var(--clr-text);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--clr-primary);
+    background-color: white;
+    box-shadow: 0 0 0 4px rgba(82, 183, 136, 0.2);
+}
+
+.names-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ROLE REVEAL & PUNTAJES */
+.player-name-banner {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    color: white;
+    background: var(--clr-secondary);
+    padding: 15px;
+    border-radius: var(--border-radius-med);
+    margin-top: 10px;
+    box-shadow: 0 5px 0px rgba(0, 0, 0, 0.2);
+}
+
+.role-reveal {
+    font-family: var(--font-heading);
+    font-size: 2.2rem;
+    padding: 30px;
+    border: 4px dashed var(--clr-secondary-dark);
+    border-radius: var(--border-radius-med);
+    background: #f8f9fa;
+    margin-top: 10px;
+}
+
+.player-score {
+    display: flex;
+    justify-content: space-between;
+    background: #f1f3f5;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: var(--border-radius-med);
+    align-items: center;
+    border: 3px solid #ddd;
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+}
+
+.score-btn {
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    font-size: 24px;
+    border-radius: 50%;
+    margin-left: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tag {
+    font-family: var(--font-text);
+    font-weight: 900;
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-left: 10px;
+    color: white;
+    vertical-align: middle;
 }
 
 /* GRID CATEGORÍAS */
@@ -290,7 +422,6 @@ button:active {
     padding-bottom: 80px;
 }
 
-/* CARTAS */
 .flip-card {
     background-color: transparent;
     width: 100%;
@@ -310,6 +441,8 @@ button:active {
 
 .flip-card.is-flipped .flip-card-inner {
     transform: rotateY(180deg) scale(0.95);
+    opacity: 0.5;
+    filter: grayscale(100%);
 }
 
 .flip-card-front,
@@ -328,7 +461,7 @@ button:active {
 
 .flip-card-front {
     background-color: white;
-    border: 4px solid var(--clr-secondary);
+    border: 4px solid #fff;
 }
 
 .card-image-wrapper {
@@ -360,7 +493,6 @@ button:active {
     text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
 }
 
-/* Reverso */
 .flip-card-back {
     background-color: #ff6b6b;
     transform: rotateY(180deg);
@@ -370,85 +502,11 @@ button:active {
     flex-direction: column;
     color: white;
     border: 4px solid #c92a2a;
-    background-image: radial-gradient(#fa5252 20%, transparent 20%), radial-gradient(#fa5252 20%, transparent 20%);
-    background-size: 20px 20px;
-    background-position: 0 0, 10px 10px;
 }
 
 .cross-mark {
     font-size: 4rem;
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
-}
-
-/* FORMULARIO */
-.form-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 40px 20px;
-    flex-grow: 1;
-}
-
-.form-card {
-    background: white;
-    padding: 40px;
-    border-radius: var(--border-radius-large);
-    box-shadow: var(--shadow-float);
-    width: 100%;
-    max-width: 550px;
-    border: 5px solid var(--clr-primary);
-    position: relative;
-}
-
-.form-header-icon {
-    font-size: 4rem;
-    text-align: center;
-    margin-top: -70px;
-    margin-bottom: 10px;
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
-}
-
-.form-subtitle {
-    text-align: center;
-    font-weight: 800;
-    color: var(--clr-primary-dark);
-    margin-bottom: 25px;
-    font-size: 1.1rem;
-}
-
-.form-group {
-    margin-bottom: 20px;
-    text-align: left;
-}
-
-.form-group label {
-    display: block;
-    font-family: var(--font-heading);
-    font-size: 1.1rem;
-    color: var(--clr-secondary-dark);
-    margin-bottom: 10px;
-}
-
-.form-group input,
-.form-group select {
-    width: 100%;
-    padding: 15px;
-    border: 3px solid #e9ecef;
-    border-radius: var(--border-radius-med);
-    font-family: inherit;
-    font-size: 1.1rem;
-    font-weight: 700;
-    transition: all 0.2s;
-    outline: none;
-    background-color: #f8f9fa;
-    color: var(--clr-text);
-}
-
-.form-group input:focus,
-.form-group select:focus {
-    border-color: var(--clr-primary);
-    background-color: white;
-    box-shadow: 0 0 0 4px rgba(82, 183, 136, 0.2);
 }
 
 .file-upload-wrapper {
@@ -503,19 +561,28 @@ button:active {
     }
 
     .menu-box h1 {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
     }
 
     .top-bar h2 {
-        font-size: 1.4rem;
+        font-size: 1.2rem;
     }
 
     .top-bar button {
-        font-size: 0.9rem;
-        padding: 10px 15px;
+        font-size: 0.8rem;
+        padding: 10px;
     }
 
     .form-card {
         padding: 30px 20px;
+    }
+
+    .player-name-banner {
+        font-size: 1.8rem;
+    }
+
+    .role-reveal {
+        font-size: 1.6rem;
+        padding: 20px;
     }
 }

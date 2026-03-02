@@ -1,8 +1,7 @@
 /**
- * LÓGICA DE LA APLICACIÓN SPA "QUIÉN ES QUIÉN"
+ * LÓGICA DE LA APLICACIÓN SPA "QUIÉN ES EL IMPOSTOR" + TABLERO INTERACTIVO
  */
 
-// Las listas de palabras originales (10 categorías x 40 palabras)
 const palabrasOriginales = {
     "Animales": ["León", "Elefante", "Tiburón", "Águila", "Pingüino", "Jirafa", "Koala", "Canguro", "Oso Polar", "Tigre", "Lobo", "Delfín", "Ballena", "Murciélago", "Camello", "Cocodrilo", "Serpiente", "Hormiga", "Abeja", "Mariposa", "Pulpo", "Medusa", "Caballo", "Vaca", "Cerdo", "Gato", "Perro", "Ratón", "Conejo", "Tortuga", "Loro", "Búho", "Flamenco", "Gorila", "Mono", "Panda", "Zorro", "Hipopótamo", "Rinoceronte", "Cebra"],
     "Países": ["Argentina", "Brasil", "España", "Francia", "Italia", "Alemania", "Japón", "China", "Estados Unidos", "México", "Canadá", "Australia", "Rusia", "India", "Egipto", "Sudáfrica", "Inglaterra", "Portugal", "Colombia", "Perú", "Chile", "Uruguay", "Grecia", "Turquía", "Corea del Sur", "Tailandia", "Vietnam", "Marruecos", "Kenia", "Nueva Zelanda", "Suecia", "Noruega", "Finlandia", "Polonia", "Ucrania", "Cuba", "Jamaica", "Venezuela", "Paraguay", "Bolivia"],
@@ -16,69 +15,44 @@ const palabrasOriginales = {
     "Marcas Famosas": ["Coca-Cola", "Pepsi", "McDonald's", "Burger King", "Nike", "Adidas", "Puma", "Apple", "Samsung", "Microsoft", "Google", "Amazon", "Facebook", "Twitter", "Instagram", "Toyota", "Ford", "Chevrolet", "Ferrari", "BMW", "Mercedes", "Audi", "Honda", "Sony", "Nintendo", "PlayStation", "Xbox", "Netflix", "Disney", "Marvel", "Lego", "Ikea", "Starbucks", "Zara", "H&M", "Louis Vuitton", "Gucci", "Rolex", "Visa", "Mastercard"]
 };
 
-// Generar la Base de Datos con avatares visuales divertidos para "Quién es Quién"
-const DB = {
-    "Mi Clase": [] // Reservado para los que agregue el usuario
-};
-
-// Mapeos de estilo de avatar por categoría para que todos tengan "caritas" o "personajes" para identificar
-// Así el Guess Who sigue siendo divertido ("¿El personaje tiene gafas?", "¿Es un robot?")
 const avatarStyles = {
-    "Animales": "bottts", // Robots tiernos
-    "Países": "adventurer", // Personajes al estilo juego de rol
-    "Profesiones": "avataaars", // Personajes humanos detallados
-    "Comida": "fun-emoji", // Caritas divertidas
-    "Deportes": "micah", // Personajes modernos
-    "Objetos de Casa": "shapes", // Formas geométricas divertidas
-    "Películas": "lorelei", // Personajes expresivos animados
-    "Partes del Cuerpo": "croodles", // Dibujos a mano
-    "Transporte": "bottts-neutral", // Robots neutrales
-    "Marcas Famosas": "big-smile" // Sonrisas grandes
+    "Animales": "bottts", "Países": "adventurer", "Profesiones": "avataaars", "Comida": "fun-emoji",
+    "Deportes": "micah", "Objetos de Casa": "shapes", "Películas": "lorelei", "Partes del Cuerpo": "croodles",
+    "Transporte": "bottts-neutral", "Marcas Famosas": "big-smile"
 };
-
-// Colores pastel tipo Ghibli para los fondos de avatares
 const bgColorOptions = ["ffd5dc", "b6e3f4", "c0aede", "d1d4f9", "ffdfbf", "eaf1e8", "fcf4dd", "ffecb3", "c7ceea", "ffb7b2"];
 
-// Poblar la BD
+const DB = { "Mi Clase": [] }; // Cartas customizadas
+const CAT_ICONS = {
+    "Mi Clase": "🎒", "Animales": "🦊", "Países": "🌎", "Profesiones": "👩‍⚕️", "Comida": "🍔",
+    "Deportes": "⚽", "Objetos de Casa": "🛋️", "Películas": "🎬", "Partes del Cuerpo": "👂",
+    "Transporte": "🚗", "Marcas Famosas": "🏷️"
+};
+
+// Autogenerar avatares para las categorías default
 for (const cat in palabrasOriginales) {
     DB[cat] = [];
-    palabrasOriginales[cat].forEach((palabra) => {
+    palabrasOriginales[cat].forEach(palabra => {
         const style = avatarStyles[cat] || "fun-emoji";
-        // Asignamos un color al azar o determinístico basado en la palabra
         const bgColor = bgColorOptions[palabra.length % bgColorOptions.length];
-        const imgUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(palabra)}&backgroundColor=${bgColor}`;
-        DB[cat].push({ name: palabra, img: imgUrl });
+        DB[cat].push({ name: palabra, img: `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(palabra)}&backgroundColor=${bgColor}` });
     });
 }
 
-// --- ICONOS PARA CATEGORÍAS ---
-const CAT_ICONS = {
-    "Mi Clase": "🎒",
-    "Animales": "🦊",
-    "Países": "🌎",
-    "Profesiones": "👩‍⚕️",
-    "Comida": "🍔",
-    "Deportes": "⚽",
-    "Objetos de Casa": "🛋️",
-    "Películas": "🎬",
-    "Partes del Cuerpo": "👂",
-    "Transporte": "🚗",
-    "Marcas Famosas": "🏷️"
+// ESTADO DEL JUEGO (SPYFALL/AMONG US)
+let players = []; // { name: "...", score: 0 }
+let currentRound = {
+    category: "",
+    word: "",
+    impostorIndices: [],
+    playerIndex: 0
 };
-
-// Variables globales
 let uploadedImageBase64 = "";
-let currentCategory = "";
 
 const app = {
-
     init() {
-        // Cargar personajes guardados localmente
         this.loadLocalData();
-        // Generar las vistas de los selectores dinámicamente
         this.populateCategorySelect();
-        // Inicializar la vista
-        this.renderCategoriesList();
     },
 
     loadLocalData() {
@@ -86,61 +60,65 @@ const app = {
         if (localData) {
             try {
                 const parsed = JSON.parse(localData);
-                // Restauramos solo las cartas de "Mi Clase" u otras creadas custom
-                for (let cat in parsed) {
-                    if (!DB[cat]) {
-                        DB[cat] = [];
-                    }
-                    // Ojo: Si la categoría ya tiene cartas generadas arriba (las 400), solo añadimos las que faltan (o las combinamos).
-                    // Pero para hacerlo fácil, asumimos que Custom DB guarda TODO. 
-                    // Como el JSON tiene 400 items, para no pisar si cambiamos el código, solo recuperamos las manuales.
-                    // Para identificar manuales, podríamos marcarlas, o simplemente confiar en la BD de "Mi Clase".
-                    if (cat === "Mi Clase") {
-                        DB[cat] = parsed[cat];
-                    }
-                }
-            } catch (e) {
-                console.error("Error leyendo LocalStorage", e);
-            }
+                if (parsed["Mi Clase"]) DB["Mi Clase"] = parsed["Mi Clase"];
+            } catch (e) { console.error(e); }
         }
     },
 
     saveLocalData() {
-        // Solo guardamos "Mi Clase" para ahorrar localstorage y no exceder los límites
-        const dataToSave = {
-            "Mi Clase": DB["Mi Clase"]
-        };
+        const dataToSave = { "Mi Clase": DB["Mi Clase"] };
         localStorage.setItem("quienEsQuienDB_Ghibli", JSON.stringify(dataToSave));
     },
 
-    populateCategorySelect() {
-        const select = document.getElementById('char-category');
-        select.innerHTML = "";
-        for (const cat in DB) {
-            const option = document.createElement('option');
-            option.value = cat;
-            option.innerText = cat;
-            select.appendChild(option);
-        }
-    },
-
-    // --- MANEJO DE VISTAS (SPA) ---
     showScreen(screenId) {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-
         const nextScreen = document.getElementById(screenId);
         nextScreen.classList.add('active');
-
-        // Pequeño desplazamiento de scroll al inicio
         nextScreen.scrollTop = 0;
-
-        // Si entramos a categorías, refrescamos por si se añadió un personaje nuevo
-        if (screenId === 'screen-categories') {
-            this.renderCategoriesList();
-        }
     },
 
-    // --- CATEGORÍAS ---
+    // --- SETUP DE JUEGO MULTIJUGADOR ---
+    goToNames() {
+        const num = parseInt(document.getElementById('num-players').value);
+        const imps = parseInt(document.getElementById('num-impostors').value);
+
+        if (imps >= num) {
+            alert("¡Cuidado capitanes! ¡No puede haber tantos impostores como tripulantes!");
+            return;
+        }
+
+        const container = document.getElementById('names-inputs');
+        container.innerHTML = "";
+
+        for (let i = 0; i < num; i++) {
+            container.innerHTML += `<div class="form-group"><input type="text" id="pname-${i}" placeholder="Nombre Tripulante ${i + 1}" value="Jugador ${i + 1}"></div>`;
+        }
+        this.showScreen('screen-names');
+    },
+
+    startGameSetup() {
+        const num = parseInt(document.getElementById('num-players').value);
+        // Si players ya tiene datos de la ronda anterior, respetamos los puntajes, sino iniciamos
+        if (players.length !== num) {
+            players = [];
+            for (let i = 0; i < num; i++) {
+                const name = document.getElementById(`pname-${i}`).value;
+                players.push({ name: name, score: 0 });
+            }
+        } else {
+            // Actualizar nombres por si los cambiaron pero mantener puntaje
+            for (let i = 0; i < num; i++) {
+                players[i].name = document.getElementById(`pname-${i}`).value;
+            }
+        }
+        this.goToCategory();
+    },
+
+    goToCategory() {
+        this.renderCategoriesList();
+        this.showScreen('screen-categories');
+    },
+
     renderCategoriesList() {
         const container = document.getElementById('categories-container');
         container.innerHTML = "";
@@ -151,61 +129,121 @@ const app = {
 
             const card = document.createElement('div');
             card.className = "category-card bouncy";
-            card.onclick = () => this.startGame(cat);
+            card.onclick = () => this.startRound(cat); // Inicia el pase de la bomba/dispositivo
 
             card.innerHTML = `
                 <div class="category-icon">${icon}</div>
                 <div class="category-title">${cat}</div>
-                <div class="category-badge">${count} Cartas</div>
+                <div class="category-badge">${count} Palabras</div>
             `;
             container.appendChild(card);
         }
     },
 
-    // --- LÓGICA DEL TABLERO DE JUEGO ---
-    startGame(category) {
-        const heroes = DB[category];
-        if (!heroes || heroes.length === 0) {
-            alert(`¡Magia! Aún no hay personajes en "${category}". ¡Añade a tus alumnos en el menú principal!`);
+    populateCategorySelect() {
+        const select = document.getElementById('char-category');
+        select.innerHTML = "";
+        for (const cat in DB) { select.innerHTML += `<option value="${cat}">${cat}</option>`; }
+    },
+
+    // --- LÓGICA DE ROUND SPYFALL ---
+    startRound(category) {
+        if (DB[category].length === 0) {
+            alert(`No hay palabras en la categoría "${category}". Añade cartas primero.`);
             return;
         }
 
-        currentCategory = category;
-        const icon = CAT_ICONS[category] || '';
-        document.getElementById('game-title').innerText = `${category} ${icon}`;
+        // Elegir palabra aleatoria
+        const wordObj = DB[category][Math.floor(Math.random() * DB[category].length)];
 
-        this.renderBoard(heroes);
-        this.showScreen('screen-game');
+        // Elegir impostores
+        const numImpostors = parseInt(document.getElementById('num-impostors').value);
+        let impostors = [];
+        while (impostors.length < numImpostors) {
+            let r = Math.floor(Math.random() * players.length);
+            if (!impostors.includes(r)) impostors.push(r);
+        }
+
+        currentRound = {
+            category: category,
+            word: wordObj.name,
+            impostorIndices: impostors,
+            playerIndex: 0
+        };
+
+        this.showNextPlayerCard();
+    },
+
+    showNextPlayerCard() {
+        if (currentRound.playerIndex >= players.length) {
+            // Se lo pasaron todos, ¡ahora al tablero de juego para debatir!
+            this.prepareBoard(currentRound.category);
+            this.showScreen('screen-game');
+            return;
+        }
+
+        const pIdx = currentRound.playerIndex;
+        document.getElementById('current-player-name').innerText = players[pIdx].name;
+        document.getElementById('card-content').classList.add('hidden');
+        document.getElementById('btn-show').classList.remove('hidden');
+        document.getElementById('btn-next').classList.add('hidden');
+
+        this.showScreen('screen-reveal');
+    },
+
+    revealRole() {
+        const pIdx = currentRound.playerIndex;
+        const isImpostor = currentRound.impostorIndices.includes(pIdx);
+
+        const roleDiv = document.getElementById('role-text');
+        const hintDiv = document.getElementById('category-hint');
+
+        if (isImpostor) {
+            roleDiv.innerHTML = "🚨 ERES EL IMPOSTOR 🚨";
+            roleDiv.style.color = "var(--clr-accent)";
+            roleDiv.style.borderColor = "var(--clr-accent)";
+            hintDiv.innerText = `Intenta adivinar la palabra o pasa desapercibido en la categoría: ${currentRound.category}.`;
+        } else {
+            roleDiv.innerHTML = `✔️ ${currentRound.word}`;
+            roleDiv.style.color = "var(--clr-primary-dark)";
+            roleDiv.style.borderColor = "var(--clr-primary)";
+            hintDiv.innerText = `Temática general: ${currentRound.category}. ¡Mantenlo en secreto!`;
+        }
+
+        document.getElementById('card-content').classList.remove('hidden');
+        document.getElementById('btn-show').classList.add('hidden');
+        document.getElementById('btn-next').classList.remove('hidden');
+    },
+
+    nextPlayer() {
+        currentRound.playerIndex++;
+        this.showNextPlayerCard();
+    },
+
+    // --- TABLERO DE JUEGO (Discusión Visual) ---
+    prepareBoard(category) {
+        document.getElementById('game-title').innerText = `Tablero: ${category} ${CAT_ICONS[category] || ''}`;
+        this.renderBoard(DB[category]);
     },
 
     renderBoard(heroesArray) {
         const board = document.getElementById('game-board');
         board.innerHTML = "";
 
+        // En lugar de iterar ordenado, las mostramos ordenadas (en el "Quién es quién" es útil encontrarlas rápido o mezcladas).
+        // El Guess Who original es ordenado para buscar rápido.
         heroesArray.forEach((hero) => {
             const card = document.createElement('div');
             card.className = "flip-card";
+            card.onclick = () => card.classList.toggle('is-flipped'); // Discard animation
 
-            // Toggle de la clase is-flipped para ocultar (descartar)
-            card.onclick = () => {
-                card.classList.toggle('is-flipped');
-                // Efecto de sonido (opcional, dejamos el espacio por si el profe quiere agregarlo luego)
-            };
-
-            const imgUrl = hero.img;
-
-            // Frente de la carta brillante y clara, reverso un patrón de "Descartado" (malla)
             card.innerHTML = `
                 <div class="flip-card-inner">
                     <div class="flip-card-front">
-                        <div class="card-image-wrapper">
-                            <img src="${imgUrl}" alt="${hero.name}" class="card-image" loading="lazy">
-                        </div>
-                        <div class="card-name" title="${hero.name}"><span>${hero.name}</span></div>
+                        <div class="card-image-wrapper"><img src="${hero.img}" class="card-image" loading="lazy"></div>
+                        <div class="card-name"><span>${hero.name}</span></div>
                     </div>
-                    <div class="flip-card-back">
-                        <div class="cross-mark">🙈</div>
-                    </div>
+                    <div class="flip-card-back"><div class="cross-mark">🙈</div></div>
                 </div>
             `;
             board.appendChild(card);
@@ -213,54 +251,94 @@ const app = {
     },
 
     restartBoard() {
-        if (currentCategory) {
-            // Añadir animación de re-mezcla al tablero al reiniciar
-            const board = document.getElementById('game-board');
-            board.style.opacity = 0;
-            setTimeout(() => {
-                this.renderBoard(DB[currentCategory]);
-                board.style.opacity = 1;
-            }, 300);
-        }
+        const board = document.getElementById('game-board');
+        board.style.opacity = 0;
+        setTimeout(() => {
+            this.renderBoard(DB[currentRound.category]); // Esto resetea el toggle de 'is-flipped'
+            board.style.opacity = 1;
+        }, 300);
     },
 
-    // --- FORMULARIO Y SUBIDA DE IMÁGENES ---
+    // --- REVELACIÓN DE RESULTADOS Y PUNTAJES ---
+    revealImpostors() {
+        if (!confirm("¿Seguro que ya identificaron al impostor o terminó es tiempo de debate?")) return;
+
+        const impNames = currentRound.impostorIndices.map(i => players[i].name).join(" y ");
+        document.getElementById('impostor-names').innerText = impNames;
+        document.getElementById('secret-word').innerText = currentRound.word;
+
+        this.renderScoring();
+        this.showScreen('screen-scores');
+    },
+
+    renderScoring() {
+        const container = document.getElementById('scoring-area');
+        container.innerHTML = "";
+
+        players.forEach((p, index) => {
+            const isImp = currentRound.impostorIndices.includes(index);
+            const roleTag = isImp ? `<span class="tag" style="background:var(--clr-accent)">IMPOSTOR</span>` : `<span class="tag" style="background:var(--clr-primary)">TRIPULANTE</span>`;
+
+            container.innerHTML += `
+                <div class="player-score">
+                    <div>
+                        <strong>${p.name}</strong> ${roleTag} <br>
+                        <small style="color:#666; font-size:0.9rem;">Pts: <span id="pts-${index}" style="font-weight:900;">${p.score}</span></small>
+                    </div>
+                    <button class="score-btn bouncy" style="background-color: var(--clr-grass); border: 2px solid var(--clr-primary-dark); color: var(--clr-primary-dark);" onclick="app.addPoint(${index})">➕</button>
+                    <!-- <button class="score-btn bouncy" style="background-color: #ffb7b2; border: 2px solid #ff006e; color: #ff006e;" onclick="app.removePoint(${index})">➖</button> -->
+                </div>
+            `;
+        });
+    },
+
+    addPoint(playerIndex) {
+        players[playerIndex].score++;
+        document.getElementById(`pts-${playerIndex}`).innerText = players[playerIndex].score;
+    },
+
+    showLeaderboard() {
+        const list = document.getElementById('scoreboard-list');
+        const sorted = [...players].sort((a, b) => b.score - a.score);
+
+        list.innerHTML = "";
+        sorted.forEach((p, i) => {
+            let medal = "🏅";
+            if (i === 0) medal = "🥇"; if (i === 1) medal = "🥈"; if (i === 2) medal = "🥉";
+            list.innerHTML += `
+                <div class="player-score" style="font-size: 1.5rem; justify-content: flex-start; padding: 20px;">
+                    <strong style="width: 40px; color: var(--clr-secondary-dark);">${medal}</strong>
+                    <span style="flex-grow: 1; text-align: left; margin-left: 10px;">${p.name}</span>
+                    <strong style="color: var(--clr-primary-dark);">${p.score} pts</strong>
+                </div>
+            `;
+        });
+        this.showScreen('screen-leaderboard');
+    },
+
+    // --- FORMULARIO CUSTOM ---
     previewImage(event) {
         const file = event.target.files[0];
         if (!file) return;
-
-        // Validar tamaño máximo (1MB para LocalStorage)
         if (file.size > 1 * 1024 * 1024) {
             alert("¡Wow, qué foto tan pesada! Por favor elige una imagen que pese menos de 1 MB.");
-            event.target.value = "";
-            return;
+            event.target.value = ""; return;
         }
-
         const reader = new FileReader();
-        reader.onload = function (e) {
+        reader.onload = e => {
             uploadedImageBase64 = e.target.result;
-            const previewBox = document.getElementById('image-preview-box');
-            previewBox.innerHTML = `<img src="${uploadedImageBase64}" alt="Vista previa">`;
+            document.getElementById('image-preview-box').innerHTML = `<img src="${uploadedImageBase64}">`;
         };
         reader.readAsDataURL(file);
     },
 
     addCharacter(event) {
         event.preventDefault();
-
         const category = document.getElementById('char-category').value;
         const name = document.getElementById('char-name').value.trim();
 
-        if (!name || (!uploadedImageBase64 && category === "Mi Clase")) {
-            alert("Falta el nombre de la carta, o su foto estrellada.");
-            return;
-        }
+        if (!name) return;
 
-        if (!DB[category]) {
-            DB[category] = [];
-        }
-
-        // Si no subió imagen en una categoría genérica, podemos auto-generarle una con Dicebear
         let finalImage = uploadedImageBase64;
         if (!finalImage) {
             const style = avatarStyles[category] || "fun-emoji";
@@ -268,27 +346,17 @@ const app = {
             finalImage = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(name)}&backgroundColor=${bgColor}`;
         }
 
-        // Insertar en la base de datos temporal (al inicio para que lo vea rápido)
-        DB[category].unshift({
-            name: name,
-            img: finalImage
-        });
+        if (!DB[category]) DB[category] = [];
+        DB[category].unshift({ name: name, img: finalImage });
 
-        // Guardar la persistencia en el navegador
         this.saveLocalData();
-
-        // Limpiar el formulario y la variable
         document.getElementById('add-char-form').reset();
         document.getElementById('image-preview-box').innerHTML = "<span>Sin foto</span>";
         uploadedImageBase64 = "";
 
-        // UI feedback y retorno seguro
-        alert(`¡✨ "${name}" ha sido añadido a la categoría "${category}" con éxito!`);
-        this.showScreen('screen-categories');
+        alert(`¡✨ La carta secreta "${name}" ha sido añadida a la categoría "${category}" con éxito!`);
+        this.showScreen('screen-menu');
     }
 };
 
-// Iniciar aplicación al cargar
-window.onload = () => {
-    app.init();
-};
+window.onload = () => app.init();
